@@ -1,100 +1,100 @@
 import pygame
 import random
 
-pygame.init()
+# Define Colors
+BLACK = (0, 0, 0)
+WHITE = (255, 255, 255)
+GRAY = (128, 128, 128)
+RED = (255, 0, 0)
+BLUE = (0, 0, 255)
+GREEN = (0, 255, 0)
+YELLOW = (255, 255, 0)
+ORANGE = (255, 165, 0)
+CYAN = (0, 255, 255)
 
-win_width = 600
-win_height = 850
-window = pygame.display.set_mode((win_width, win_height))
-pygame.display.set_caption("Tetris")
-
-square_size = 40
-
-shapes = [
-    # I shape
-    [[1, 1, 1, 1]],
-    # O shape
-    [[0, 1, 1, 0],
-     [0, 1, 1, 0]],
-    # T shape
-    [[0, 0, 1, 0],
-     [0, 1, 1, 1]],
-    # S shape
-    [[0, 0, 1, 1],
-     [0, 1, 1, 0]],
-    # Z shape
-    [[0, 1, 1, 0],
-     [0, 0, 1, 1]],
-    # J shape
-    [[0, 1, 0, 0],
-     [0, 1, 1, 1]],
-    # L shape
-    [[0, 0, 0, 1],
-     [0, 1, 1, 1]],
+# Define shapes
+SHAPES = [
+    [[1, 1, 1],
+     [0, 1, 0]],
+    [[0, 2, 2],
+     [2, 2, 0]],
+    [[3, 3, 0],
+     [0, 3, 3]],
+    [[4, 0, 0],
+     [4, 4, 4]],
+    [[0, 0, 5, 0],
+     [0, 5, 5, 5]],
+    [[6, 6],
+     [6, 6]],
+    [[0, 7, 0, 0],
+     [0, 7, 7, 7]]
 ]
 
-black = (0, 0, 0)
-white = (255, 255, 255)
-gray = (128, 128, 128)
-red = (255, 0, 0)
-cyan = (0, 255, 255)
-blue = (0, 0, 255)
-orange = (255, 165, 0)
-yellow = (255, 255, 0)
-green = (0, 255, 0)
-purple = (128, 0, 128)
-shape_colors = [cyan, yellow, purple, green, orange, blue, red]
 
-shape_y = 0
+# Define shape class
+class Shape:
+    def __init__(self, shape):
+        self.shape = shape
+        self.color = random.choice([RED, BLUE, GREEN, YELLOW, ORANGE, CYAN])
+        self.x = 4
+        self.y = 0
 
-frame_rate = 2
+    def move_down(self):
+        self.y += 1
+
+    def draw(self, screen, block_size):
+        for i in range(len(self.shape)):
+            for j in range(len(self.shape[0])):
+                if self.shape[i][j] != 0:
+                    pygame.draw.rect(screen, self.color, (self.x * block_size + j * block_size, self.y * block_size + i * block_size, block_size, block_size))
+                    pygame.draw.rect(screen, 'white', (self.x * block_size + j * block_size, self.y * block_size + i * block_size, block_size, block_size), 1)
+
+
+# Initialize Pygame
+pygame.init()
+
+# Set up window
+WINDOW_WIDTH = 320
+WINDOW_HEIGHT = 500
+screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+pygame.display.set_caption('Tetris')
+
+# Set up clock
 clock = pygame.time.Clock()
-current_shape = random.choice(shapes)
 
+# Set up game variables
+block_size = 20
+shapes = []
+current_shape = Shape(random.choice(SHAPES))
 
-def collision(x_cor, y_cor):
-    pos_x = x_cor + 1
-    pos_y = y_cor + 1
-    if pos_x < 0 or pos_x >= 800 or pos_y >= 800:
-        return True
-    if pos_y >= 0 and (pos_x != 0 and pos_y != 0):
-        return True
-    return False
-
-
-run = True
-while run:
+# Game loop
+while True:
+    # Handle events
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            run = False
+            pygame.quit()
+            quit()
 
-    window.fill('dark gray')
+    # Move current shape down
+    current_shape.move_down()
 
-    # Draws the squares by (x, y)
+    # Check if current shape has collided with another shape or reached the bottom
+    if current_shape.y + len(current_shape.shape) >= 480 / block_size:
+        shapes.append(current_shape)
+        current_shape = Shape(random.choice(SHAPES))
+
+    # Draw current shape and all other shapes on screen
+    screen.fill('dark gray')
     for x in range(1, 10):
-        for y in range(1, 20):
+        for y in range(1, 24):
             # First creates square with gray color. Second draws black border for square
-            pygame.draw.rect(window, 'light gray', (20 * x * 2, 20 * y * 2, square_size, square_size), 0)
-            pygame.draw.rect(window, 'black', (20 * x * 2, 20 * y * 2, square_size, square_size), 1)
+            pygame.draw.rect(screen, 'light gray', (10 * x * 2, 10 * y * 2, 20, 20), 0)
+            pygame.draw.rect(screen, 'black', (10 * x * 2, 10 * y * 2, 20, 20), 1)
+    for shape in shapes:
+        shape.draw(screen, block_size)
 
-    # I shape
-    shape = [[1, 1, 1, 1]]
-    color = cyan
-    shape_y += 40
-    # Draw the shape on the screen
-    for row in range(len(shapes[0])):
-        for col in range(len(shapes[0][row])):
-            if shapes[0][row][col] == 1:
-                x = (col + 4) * square_size
-                y = (row + 1) * square_size
-                if collision(x, y):
-                    pygame.draw.rect(window, color, (x, y + shape_y, square_size, square_size), 0)
-                    pygame.draw.rect(window, black, (x, y + shape_y, square_size, square_size), 1)
-
-    # Update the display
+    current_shape.draw(screen, block_size)
     pygame.display.update()
 
-    clock.tick(frame_rate)
-
-# Clean up
-pygame.quit()
+    # Tick clock
+    clock.tick(10)
